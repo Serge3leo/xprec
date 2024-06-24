@@ -148,7 +148,12 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
 
         # clang on 14.4.1 fails to include C header files...
         if platform.system() == 'Darwin':
-            os.environ['CPATH'] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include:" + os.environ.get('CPATH', '')
+            sdk_path = (
+                "/Applications/Xcode.app/Contents/Developer/Platforms/"
+                "MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+            )
+            current_cpath = os.environ.get('CPATH', '')
+            os.environ['CPATH'] = f"{sdk_path}:{current_cpath}"
 
         # This has to be set to false because MacOS does not ship openmp
         # by default.
