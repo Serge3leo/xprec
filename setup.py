@@ -134,6 +134,7 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             new_flags = {"-Wextra": None, "-std": "c11"}
             # By default, we do not optimize for the architecture by default,
             # because this is harmful when building a binary package.
+            print("debug", self.opt_arch)
             if self.opt_arch:
                 new_flags["-mtune"] = new_flags["-march"] = "native"
 
