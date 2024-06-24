@@ -142,7 +142,10 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             # Replace arch with march
             if "-arch" in flags_dict:
                 flags_dict["-march"] = flags_dict.pop("-arch")
-            print(flags_dict)
+
+            if "-march" in flags_dict and platform.system() == 'Darwin':
+                if flags_dict["-march"] == 'x86_64':
+                    flags_dict["-march"] == 'naive'
 
             flags_dict.update(new_flags)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
