@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 import io
 import os.path
+import os
 import platform
 import re
 
@@ -144,6 +145,10 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
 
             flags_dict.update(new_flags)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
+
+        # clang on 14.4.1 fails to include C header files...
+        if platform.system() == 'Darwin':
+            os.environ['CPATH'] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include:" + os.environ.get('CPATH', '')
 
         # This has to be set to false because MacOS does not ship openmp
         # by default.
