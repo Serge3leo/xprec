@@ -20,24 +20,27 @@ jobs:
           - os: ubuntu-latest
             numpy-version: auto
             python-version: 3.9
+          - os: ubuntu-latest
+            numpy-version: 2.0
+            python-version: 3.11
           - os: windows-latest
             numpy-version: auto
             python-version: 3.9
-          - os: macos-latest
+          - os: macos-12
             numpy-version: auto
             python-version: 3.9
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install numpy ${{ matrix.numpy-version }}
         if: ${{ matrix.numpy-version != 'auto' }}
         run: |
-          pip install numpy==1.16
+          pip install numpy==${{ matrix.numpy-version }}
 
       - name: Install package with testing dependencies
         run: |
