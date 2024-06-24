@@ -351,11 +351,13 @@ static int import_ddouble_dtype()
     if (dd_module == NULL)
         return -1;
 
-    // Now, ddouble should be defined
-    type_num = PyArray_TypeNumFromName("ddouble");
-    if (type_num == NPY_NOTYPE)
+    PyArray_Descr *dtype =
+        (PyArray_Descr *)PyObject_GetAttrString(dd_module, "dtype");
+    if (dtype == NULL)
         return -1;
 
+    /* Let's pray at least this stays public */
+    type_num = dtype->type_num;
     return 0;
 }
 

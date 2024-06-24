@@ -533,17 +533,27 @@ static int NPyDDouble_ArgMin(void *_data, npy_intp n, npy_intp *min_ind,
     MARK_UNUSED(arr);
 }
 
+/* This is necessary in order to ensure both 1.0 and 2.0 compatibility.
+ * https://numpy.org/doc/stable/reference/c-api/array.html#c.PyArray_RegisterDataType
+ */
+#if NPY_ABI_VERSION < 0x02000000
+#define PyArray_DescrProto PyArray_Descr
+#endif
+
 static int make_dtype()
 {
     /* Check if another module has registered a ddouble type.
+     *
+     * FIXME: this check is removed, let's see if it is missed ...
      */
-    type_num = PyArray_TypeNumFromName("ddouble");
-    if (type_num != NPY_NOTYPE) {
-        return type_num;
-    }
+    //type_num = PyArray_TypeNumFromName("ddouble");
+    //if (type_num != NPY_NOTYPE) {
+    //   return type_num;
+    //}
 
     static PyArray_ArrFuncs ddouble_arrfuncs;
-    static PyArray_Descr ddouble_dtype = {
+
+    static PyArray_DescrProto ddouble_dtype = {
         PyObject_HEAD_INIT(NULL)
 
         /* We must register ddouble with a kind other than "f", because numpy
