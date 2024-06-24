@@ -145,9 +145,11 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
 
             if "-march" in flags_dict and platform.system() == 'Darwin':
                 if flags_dict["-march"] == 'x86_64':
-                    flags_dict["-march"] == 'naive'
+                    flags_dict["-march"] = 'naive'
 
+            print(flags_dict)
             flags_dict.update(new_flags)
+            print(new_dict)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
 
         # clang on 14.4.1 fails to include C header files...
