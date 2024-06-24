@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 import io
 import os.path
+import os
 import platform
 import re
 
@@ -142,8 +143,23 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             if "-arch" in flags_dict:
                 flags_dict["-march"] = flags_dict.pop("-arch")
 
+            # Remove any existing -mtune, -march, -arch flags if not self.opt_arch
+            if not self.opt_arch:
+                for key in ["-mtune", "-march", "-arch"]:
+                    if key in flags_dict:
+                        del flags_dict[key]
+
             flags_dict.update(new_flags)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
+
+        # clang on 14.4.1 fails to include C header files...
+        if platform.system() == 'Darwin':
+            sdk_path = (
+                "/Applications/Xcode.app/Contents/Developer/Platforms/"
+                "MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+            )
+            current_cpath = os.environ.get('CPATH', '')
+            os.environ['CPATH'] = f"{sdk_path}:{current_cpath}"
 
         # This has to be set to false because MacOS does not ship openmp
         # by default.
