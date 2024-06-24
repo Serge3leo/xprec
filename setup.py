@@ -134,7 +134,6 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             new_flags = {"-Wextra": None, "-std": "c11"}
             # By default, we do not optimize for the architecture by default,
             # because this is harmful when building a binary package.
-            print("debug", self.opt_arch)
             if self.opt_arch:
                 new_flags["-mtune"] = new_flags["-march"] = "native"
 
@@ -144,14 +143,13 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             if "-arch" in flags_dict:
                 flags_dict["-march"] = flags_dict.pop("-arch")
 
+            # Remove any existing -mtune, -march, -arch flags if not self.opt_arch
             if not self.opt_arch:
                 for key in ["-mtune", "-march", "-arch"]:
                     if key in flags_dict:
                         del flags_dict[key]
 
-            print(flags_dict)
             flags_dict.update(new_flags)
-            print(new_flags)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
 
         # clang on 14.4.1 fails to include C header files...
