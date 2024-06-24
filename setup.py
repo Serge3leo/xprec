@@ -65,6 +65,7 @@ def update_flags(exec, update):
             if cflags_curr is None:
                 raise ValueError("expected flag" + str(exec))
             cflags_so[cflags_curr] = arg
+            cflags_curr = None
     if cflags_curr is not None:
         cflags_so[cflags_curr] = None
 
