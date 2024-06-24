@@ -136,9 +136,7 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             if self.opt_arch:
                 new_flags["-mtune"] = new_flags["-march"] = "native"
 
-            print("FLAGS", self.compiler.compiler_so)
             cc_so, flags_dict = get_flags_dict(self.compiler.compiler_so)
-            print("FLAGS_DICT", flags_dict)
 
             # Replace arch with march
             if "-arch" in flags_dict:
@@ -146,7 +144,6 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
 
             flags_dict.update(new_flags)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
-            print("EXEC", self.compiler.compiler_so)
 
         # This has to be set to false because MacOS does not ship openmp
         # by default.
