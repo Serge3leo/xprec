@@ -46,13 +46,29 @@ def update_flags(exec, update):
     # First, let us clean up the mess of compiler options a little bit:  Move
     # flags out into a dictionary, thereby removing the myriad of duplicates
     print("FLAGS", exec)
-    cc_so, *cflags_so = exec
-    def _splitflag(arg):
-        arg = arg.split("=", 1)
-        if len(arg) == 1:
-            arg = arg + [None]
-        return arg
-    cflags_so = {k: v for (k,v) in map(_splitflag, cflags_so)}
+    cc_so, *cflags_so_list = exec
+
+    cflags_curr = None
+    cflags_so = {}
+    for arg in cflags_so_list:
+        if arg.startswith("-"):
+            if cflags_curr is not None:
+                cflags_so[cflags_curr] = None
+                cflags_curr = None
+            arg = arg.split("=", 1)
+            if len(arg) == 1:
+                cflags_curr, = arg
+            else:
+                k, v = arg
+                cflags_so[k] = v
+        else:
+            if cflags_curr is None:
+                raise ValueError("expected flag" + str(exec))
+            cflags_so[cflags_curr] = arg
+    if cflags_curr is not None:
+        cflags_so[cflags_curr] = None
+
+    print("FLAGS_DICT", cflags_so)
 
     # Now update the flags
     cflags_so.update(update)
