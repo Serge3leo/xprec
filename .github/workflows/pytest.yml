@@ -20,6 +20,9 @@ jobs:
           - os: ubuntu-latest
             numpy-version: auto
             python-version: 3.9
+          - os: ubuntu-latest
+            numpy-version: 2.0
+            python-version: 3.11
           - os: windows-latest
             numpy-version: auto
             python-version: 3.9
