@@ -149,7 +149,7 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
 
             print(flags_dict)
             flags_dict.update(new_flags)
-            print(new_dict)
+            print(new_flags)
             self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
 
         # clang on 14.4.1 fails to include C header files...
