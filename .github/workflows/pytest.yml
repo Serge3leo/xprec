@@ -40,7 +40,7 @@ jobs:
       - name: Install numpy ${{ matrix.numpy-version }}
         if: ${{ matrix.numpy-version != 'auto' }}
         run: |
-          pip install numpy==1.16
+          pip install numpy==${{ matrix.numpy-version }}
 
       - name: Install package with testing dependencies
         run: |
