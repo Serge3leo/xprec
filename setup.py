@@ -144,9 +144,10 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             if "-arch" in flags_dict:
                 flags_dict["-march"] = flags_dict.pop("-arch")
 
-            if "-march" in flags_dict and platform.system() == 'Darwin':
-                if flags_dict["-march"] == 'x86_64':
-                    flags_dict["-march"] = 'naive'
+            if not self.opt_arch:
+                for key in ["-mtune", "-march", "-arch"]:
+                    if key in flags_dict:
+                        del flags_dict[key]
 
             print(flags_dict)
             flags_dict.update(new_flags)
