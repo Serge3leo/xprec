@@ -33,7 +33,6 @@ jobs:
             numpy-version: auto
             python-version: 3.11
     steps:
-    steps:
       - uses: actions/checkout@v4
 
       - name: Set up python ${{ matrix.python-version }}
