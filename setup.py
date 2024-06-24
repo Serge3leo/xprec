@@ -45,6 +45,7 @@ def append_if_absent(list, arg):
 def update_flags(exec, update):
     # First, let us clean up the mess of compiler options a little bit:  Move
     # flags out into a dictionary, thereby removing the myriad of duplicates
+    print("FLAGS", exec)
     cc_so, *cflags_so = exec
     def _splitflag(arg):
         arg = arg.split("=", 1)
