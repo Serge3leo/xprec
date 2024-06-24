@@ -42,12 +42,10 @@ def append_if_absent(list, arg):
         list.append(arg)
 
 
-def update_flags(exec, update):
+def get_flags_dict(exec):
     # First, let us clean up the mess of compiler options a little bit:  Move
     # flags out into a dictionary, thereby removing the myriad of duplicates
-    print("FLAGS", exec)
     cc_so, *cflags_so_list = exec
-
     cflags_curr = None
     cflags_so = {}
     for arg in cflags_so_list:
@@ -69,10 +67,11 @@ def update_flags(exec, update):
     if cflags_curr is not None:
         cflags_so[cflags_curr] = None
 
-    print("FLAGS_DICT", cflags_so)
+    return cc_so, cflags_so
 
+
+def make_exec_string(cc_so, cflags_so):
     # Now update the flags
-    cflags_so.update(update)
     cflags_so = [k + ("=" + v if v is not None else "")
                  for (k,v) in cflags_so.items()]
     return [cc_so] + cflags_so
@@ -136,8 +135,18 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
             # because this is harmful when building a binary package.
             if self.opt_arch:
                 new_flags["-mtune"] = new_flags["-march"] = "native"
-            self.compiler.compiler_so = update_flags(
-            self.compiler.compiler_so, new_flags)
+
+            print("FLAGS", self.compiler.compiler_so)
+            cc_so, flags_dict = get_flags_dict(self.compiler.compiler_so)
+            print("FLAGS_DICT", flags_dict)
+
+            # Replace arch with march
+            if "-arch" in flags_dict:
+                flags_dict["-march"] = flags_dict.pop("-arch")
+
+            flags_dict.update(new_flags)
+            self.compiler.compiler_so = make_exec_string(cc_so, flags_dict)
+            print("EXEC", self.compiler.compiler_so)
 
         # This has to be set to false because MacOS does not ship openmp
         # by default.
