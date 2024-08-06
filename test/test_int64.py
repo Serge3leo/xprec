@@ -7,6 +7,18 @@ import pytest
 
 import xprec
 
+
+if np.lib.NumpyVersion(np.__version__) < '1.27.0':
+    smallest_subnormal = (np.finfo(np.float64).tiny *
+                          2**-np.finfo(np.float64).nmant)
+
+    import warnings
+
+    warnings.warn(UserWarning("Wow, that is an old NumPy version!"))
+else:
+    smallest_subnormal = np.finfo(np.float64).smallest_subnormal
+
+
 int64_reference = [
         (0.,    0, 0),
         (0.5,   0, 0),
@@ -41,8 +53,7 @@ int64_reference = [
         (2**63 - 1024,  1023,           np.iinfo(np.int64).max),
         (2**63 - 1024,  1023.5,         np.iinfo(np.int64).max),
         (2**63 - 1024,  1024 - 2**-43,  np.iinfo(np.int64).max),
-        (2**63,         -np.finfo(np.float64).smallest_subnormal,
-         np.iinfo(np.int64).max),
+        (2**63,         -smallest_subnormal, np.iinfo(np.int64).max),
         # Negative only
         (-2**63,        0,              np.iinfo(np.int64).min),
         ]
@@ -85,7 +96,7 @@ def test_from_int64(exp_a, exp_b, int64_ref):
         pytest.param(0, xprec.finfo(xprec.ddouble).min, None,
                      marks=pytest.mark.xfail(reason='xprec.finfo - bug')),
         (2**63, None, None),
-        (-2**63, -np.finfo(np.float64).smallest_subnormal, None),
+        (-2**63, -smallest_subnormal, None),
         ])
 def test_from_int64_numpy_warning(a, b, expected):
     with pytest.warns(RuntimeWarning) as record:
@@ -142,7 +153,7 @@ def test_int64_border():
 
 
 uint64_reference = [
-        (-1,    +np.finfo(np.float64).smallest_subnormal, 0),
+        (-1,    +smallest_subnormal, 0),
         (-1.,   +np.finfo(np.float64).eps, 0),
         (0.,    0, 0),
         (0.5,   0, 0),
@@ -177,16 +188,14 @@ uint64_reference = [
         (2**63 - 1024,  1023,           np.iinfo(np.int64).max),
         (2**63 - 1024,  1023.5,         np.iinfo(np.int64).max),
         (2**63 - 1024,  1024 - 2**-43,  np.iinfo(np.int64).max),
-        (2**63,         -np.finfo(np.float64).smallest_subnormal,
-         np.iinfo(np.int64).max),
+        (2**63,         -smallest_subnormal, np.iinfo(np.int64).max),
         (2**64 - 2048,  2046,           np.iinfo(np.uint64).max - 1),
         (2**64 - 2048,  2046.5,         np.iinfo(np.uint64).max - 1),
         (2**64 - 2048,  2047 - 2**-42,  np.iinfo(np.uint64).max - 1),
         (2**64 - 2048,  2047,           np.iinfo(np.uint64).max),
         (2**64 - 2048,  2047.5,         np.iinfo(np.uint64).max),
         (2**64 - 2048,  2048 - 2**-42,  np.iinfo(np.uint64).max),
-        (2**64,         -np.finfo(np.float64).smallest_subnormal,
-         np.iinfo(np.uint64).max),
+        (2**64,         -smallest_subnormal, np.iinfo(np.uint64).max),
         ]
 
 

@@ -49,6 +49,8 @@ jobs:
       - name: Install package with testing dependencies
         run: |
           pip install -v .[test]
+          pip uninstall -y -v xprec -v
+          pip install --no-deps -v .[test]
 
       - name: Test with pytest
         run: |
