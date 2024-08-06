@@ -804,9 +804,9 @@ static void to_int64(void *_from, void *_to, npy_intp n,
             double c = f.hi - (double)thi;
 
             if(f.hi >= 0) {
-                to[i] = thi + (int64_t)floor(f.lo + c);
+                to[i] = (uint64_t)(thi + (int64_t)floor(f.lo + c));
             } else {
-                to[i] = thi + (int64_t)ceil(f.lo + c);
+                to[i] = (uint64_t)(thi + (int64_t)ceil(f.lo + c));
             }
         }
     }
@@ -852,9 +852,9 @@ static void to_uint64(void *_from, void *_to, npy_intp n,
             to[i] = (1ull<<63) + thi + (uint64_t)floor(f.lo + c);
         } else {
             DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
-            uint64_t thi = (uint64_t) f.hi;
+            int64_t thi = (int64_t) f.hi;
             double c = f.hi - (double) thi;
-            to[i] = thi + (uint64_t)floor(f.lo + c);
+            to[i] = (uint64_t)(thi + (int64_t)floor(f.lo + c));
         }
     }
     MARK_UNUSED(_arr_from);

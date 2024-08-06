@@ -51,6 +51,7 @@ jobs:
           pip install -U -v .[test]
           pip uninstall -y -v xprec -v
           pip install -U --force-reinstall --no-deps -v .[test]
+          clang -v || true
 
       - name: Test with pytest
         run: |

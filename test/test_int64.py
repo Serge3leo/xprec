@@ -15,7 +15,7 @@ if np.lib.NumpyVersion(np.__version__) < '1.22.0':
     import warnings
 
     warnings.warn(UserWarning("Wow, that is an old NumPy version! " +
-                              repr(np.lib.NumpyVersion(np.__version__))))
+                              str(np.lib.NumpyVersion(np.__version__))))
 else:
     smallest_subnormal = np.finfo(np.float64).smallest_subnormal
 
@@ -262,12 +262,12 @@ def test_uint64_cvt():
 def test_uint64_border():
     for i in range(-10, 11):
         if i >= 0 and (i & 1):
-            assert np.uint64(np.float64(np.uint64(2**53 + i))) != 2**53 + i
+            assert np.uint64(np.float64(np.uint64(2**53 + i))) != np.uint64(2**53 + i)
         else:
-            assert np.uint64(np.float64(np.uint64(2**53 + i))) == 2**53 + i
-        assert 2**53 + i == np.uint64(np.asarray(np.uint64(2**53 + i),
+            assert np.uint64(np.float64(np.uint64(2**53 + i))) == np.uint64(2**53 + i)
+        assert np.uint64(2**53 + i) == np.uint64(np.asarray(np.uint64(2**53 + i),
                                                  dtype=xprec.ddouble))
-        assert 2**53 == np.uint64(i + np.asarray(np.uint64(2**53 - i),
+        assert np.uint64(2**53) == np.uint64(i + np.asarray(np.uint64(2**53 - i),
                                                  dtype=xprec.ddouble))
     pm = np.iinfo(np.int32).max
     for i in range(0, 11):
