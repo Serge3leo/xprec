@@ -3,10 +3,10 @@ name: xprec python package
 on:
   push:
     branches:
-      mainline
+      test_ints
   pull_request:
     branches:
-      mainline
+      test_ints
 
 jobs:
   build:
