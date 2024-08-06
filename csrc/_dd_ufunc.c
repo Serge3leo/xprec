@@ -9,8 +9,11 @@
 #include <Python.h>
 #include <structmember.h>
 
+#include <assert.h>
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdalign.h>
 
 #include "dd_arith.h"
@@ -34,6 +37,23 @@ static inline void _Py_SET_TYPE(PyObject *ob, PyTypeObject *type)
 #ifdef _MSC_VER
 #define alignof __alignof
 #endif
+
+#ifdef __has_builtin
+    #if __has_builtin(__builtin_expect)
+        #define DD_LIKELY(x)   __builtin_expect(!!(x), 1)
+        #define DD_UNLIKELY(x) __builtin_expect(!!(x), 0)
+    #endif
+#endif
+#ifndef DD_LIKELY
+    #define DD_LIKELY(x)   NPY_LIKELY(x)
+    #define DD_UNLIKELY(x) NPY_UNLIKELY(x)
+#endif
+#ifndef DD_NDEBUG
+    #define DD_ASSERT(x)  (assert(x))
+#else
+    #define DD_ASSERT(x)  ((void)0)
+#endif
+
 
 /* ------------------------ DDouble object ----------------------- */
 
@@ -638,14 +658,33 @@ static int make_dtype()
         MARK_UNUSED(_arr_to);                                        \
     }
 
-#define NPY_CAST_TO_I64(func, to_type)                               \
+#define NPY_CAST_TO_I(func, to_type, type_min, type_max)             \
     static void func(void *_from, void *_to, npy_intp n,             \
                      void *_arr_from, void *_arr_to)                 \
     {                                                                \
+        int fe_invalid = 0;                                          \
         to_type *to = (to_type *)_to;                                \
         const ddouble *from = (const ddouble *)_from;                \
-        for (npy_intp i = 0; i < n; ++i)                             \
-            to[i] = (to_type) from[i].hi + (to_type) from[i].lo;     \
+        for (npy_intp i = 0; i < n; i += 1) {                        \
+            ddouble f = from[i];                                     \
+            int64_t thi = (int64_t)f.hi;                             \
+            double c = f.hi - (double)thi;                           \
+                                                                     \
+            if (c == 0) {                                            \
+                if ((type_min) >= 0 || f.hi >= 0) {                  \
+                    thi -= (f.lo < 0);                               \
+                } else {                                             \
+                    thi += (f.lo > 0);                               \
+                }                                                    \
+            }                                                        \
+            to[i] = thi;                                             \
+            if (thi < (type_min) || thi > (type_max)) {              \
+                fe_invalid = 1;                                      \
+            }                                                        \
+        }                                                            \
+        if (fe_invalid) {                                            \
+            npy_set_floatstatus_invalid();                           \
+        }                                                            \
         MARK_UNUSED(_arr_from);                                      \
         MARK_UNUSED(_arr_to);                                        \
     }
@@ -662,24 +701,165 @@ NPY_CAST_FROM(from_uint16, uint16_t)
 NPY_CAST_FROM(from_uint32, uint32_t)
 
 // These casts are also lossless, because we have now 2*54 bits of mantissa
-NPY_CAST_FROM_I64(from_int64, int64_t)
-NPY_CAST_FROM_I64(from_uint64, uint64_t)
+static void from_int64(void *_from, void *_to, npy_intp n,
+                       void *_arr_from, void *_arr_to)
+{
+    const int64_t imin_ulp = INT64_MIN +
+                             ((1ull<<(63 - DBL_MANT_DIG)) - 1ull);
+    const int64_t imax_ulp = INT64_MAX -
+                             ((1ull<<(63 - DBL_MANT_DIG)) - 1ull);
+    ddouble *to = (ddouble *)_to;
+    const int64_t *from = (const int64_t *)_from;
+    for (npy_intp i = 0; i < n; ++i) {
+        int64_t f = from[i];
+        if(DD_UNLIKELY(f < imin_ulp)) {
+            to[i] = two_sum_quick((double)imin_ulp,
+                                  f - (int64_t)(double)imin_ulp);
+        } else if(DD_UNLIKELY(f > imax_ulp)) {
+            to[i] = two_sum_quick((double)imax_ulp,
+                                  f - (int64_t)(double)imax_ulp);
+        } else {
+            double hi = f;
+            double lo = f - (int64_t)hi;
+            to[i] = (ddouble){hi, lo};
+        }
+        DD_ASSERT(fabs(to[i].hi) >= fabs(to[i].lo));
+        DD_ASSERT(to[i].hi == (to[i].hi + to[i].lo));
+    }
+    MARK_UNUSED(_arr_from);
+    MARK_UNUSED(_arr_to);
+}
+
+static void from_uint64(void *_from, void *_to, npy_intp n,
+                        void *_arr_from, void *_arr_to)
+{
+    const uint64_t umax_ulp = UINT64_MAX -
+                              ((1ull<<(65 - DBL_MANT_DIG)) - 1ull);
+    ddouble *to = (ddouble *)_to;
+    const uint64_t *from = (const uint64_t *)_from;
+    for (npy_intp i = 0; i < n; ++i) {
+        uint64_t u = from[i];
+        if(DD_UNLIKELY(u > umax_ulp)) {
+            to[i] = two_sum_quick((double)umax_ulp,
+                    (double)(int64_t)(u - (uint64_t)(double)umax_ulp));
+        } else {
+            double hi = u;
+            double lo = (double)(int64_t)(u - (uint64_t)hi);
+            to[i] = (ddouble){hi, lo};
+        }
+        DD_ASSERT(fabs(to[i].hi) >= fabs(to[i].lo));
+        DD_ASSERT(to[i].hi == (to[i].hi + to[i].lo));
+    }
+        // `double hi = (uint64_t)...` set NPY_FPE_INVALID in number cases
+    if(npy_get_floatstatus_barrier(_to)&NPY_FPE_INVALID) {
+        npy_clear_floatstatus_barrier(_to);
+    }
+    MARK_UNUSED(_arr_from);
+    MARK_UNUSED(_arr_to);
+}
 
 // These casts are all lossy
 NPY_CAST_TO(to_double, double)
 NPY_CAST_TO(to_float, float)
 NPY_CAST_TO(to_bool, bool)
-NPY_CAST_TO(to_int8, int8_t)
-NPY_CAST_TO(to_int16, int16_t)
-NPY_CAST_TO(to_int32, int32_t)
-NPY_CAST_TO(to_uint8, uint8_t)
-NPY_CAST_TO(to_uint16, uint16_t)
-NPY_CAST_TO(to_uint32, uint32_t)
+NPY_CAST_TO_I(to_int8, int8_t, INT8_MIN, INT8_MAX)
+NPY_CAST_TO_I(to_int16, int16_t, INT16_MIN, INT16_MAX)
+NPY_CAST_TO_I(to_int32, int32_t, INT32_MIN, INT32_MAX)
+NPY_CAST_TO_I(to_uint8, uint8_t, 0, UINT8_MAX)
+NPY_CAST_TO_I(to_uint16, uint16_t, 0, UINT16_MAX)
+NPY_CAST_TO_I(to_uint32, uint32_t, 0, UINT32_MAX)
 
-// These casts can be made more accurate
-NPY_CAST_TO_I64(to_int64, int64_t)
-NPY_CAST_TO_I64(to_uint64, uint64_t)
+static void to_int64(void *_from, void *_to, npy_intp n,
+                     void *_arr_from, void *_arr_to)
+{
+    int64_t *to = (int64_t *)_to;
+    const ddouble *from = (const ddouble *)_from;
+    for (npy_intp i = 0; i < n; ++i) {
+        DD_ASSERT(!(fabs(from[i].hi) < fabs(from[i].lo)));
+        DD_ASSERT(isnan(from[i].hi) ||
+                  from[i].hi == (from[i].hi + from[i].lo));
 
+        ddouble f = from[i];
+
+            // Use double negative for NaN
+        if(DD_UNLIKELY(!(f.hi < 0x1.p+63))) {
+            if(DD_LIKELY(f.hi == 0x1.p+63 && f.lo < 0.)) {
+                DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+                to[i] = INT64_MAX + ((int64_t)floor(f.lo)) + 1;
+            } else {
+                to[i] = (int64_t)f.hi;  // Return platform depended value
+                npy_set_floatstatus_invalid();
+            }
+        } else if(DD_UNLIKELY(!(f.hi > -0x1.p+63))) {
+            if(DD_UNLIKELY(f.hi == -0x1.p+63 && f.lo >= 0.)) {
+                DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+                to[i] = INT64_MIN + ((int64_t)ceil(f.lo));
+            } else {
+                to[i] = (int64_t)f.hi;  // Return platform depended value
+                npy_set_floatstatus_invalid();
+            }
+        } else {
+            DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+            int64_t thi = (int64_t)f.hi;
+            double c = f.hi - (double)thi;
+
+            if(f.hi >= 0) {
+                to[i] = thi + (int64_t)floor(f.lo + c);
+            } else {
+                to[i] = thi + (int64_t)ceil(f.lo + c);
+            }
+        }
+    }
+    MARK_UNUSED(_arr_from);
+    MARK_UNUSED(_arr_to);
+}
+
+static void to_uint64(void *_from, void *_to, npy_intp n,
+                      void *_arr_from, void *_arr_to)
+{
+    uint64_t *to = (uint64_t *)_to;
+    const ddouble *from = (const ddouble *)_from;
+    for (npy_intp i = 0; i < n; ++i) {
+        DD_ASSERT(!(fabs(from[i].hi) < fabs(from[i].lo)));
+        DD_ASSERT(isnan(from[i].hi) ||
+                  from[i].hi == (from[i].hi + from[i].lo));
+
+        ddouble f = from[i];
+
+            // clang/Intel:
+            //     (1ull<<63) == (uint64_t)0x1.p+64 (but gcc == 0)
+            //     (1ull<<63) == (uint64_t)0x1.p+63
+            //
+            // Use double negative for NaN
+        if(DD_UNLIKELY(DD_UNLIKELY(!(f.hi < 0x1.p+64)) ||
+                       DD_UNLIKELY(!(f.hi >= 0.)))) {
+            if(DD_LIKELY(f.hi == 0x1.p+64 && f.lo < 0.)){
+                DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+                to[i] = UINT64_MAX + 1 + (int64_t)floor(f.lo);
+            } else if(DD_UNLIKELY(!((f.hi < 0x1.p+64 && f.hi > -1.) ||
+                        (f.hi == -1. && f.lo > 0.)))) {
+                to[i] = (uint64_t)f.hi;  // Return platform depended value
+                npy_set_floatstatus_invalid();
+            } else {
+                DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+                to[i] = 0;
+            }
+        } else if(DD_UNLIKELY(f.hi >= 0x1.p+63)) {
+            DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+            f.hi -= 0x1.p+63;
+            int64_t thi = (int64_t)f.hi;
+            double c = f.hi - (double)thi;
+            to[i] = (1ull<<63) + (uint64_t)(thi + (int64_t)floor(f.lo + c));
+        } else {
+            DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
+            int64_t thi = (int64_t)f.hi;
+            double c = f.hi - (double)thi;
+            to[i] = (uint64_t)(thi + (int64_t)floor(f.lo + c));
+        }
+    }
+    MARK_UNUSED(_arr_from);
+    MARK_UNUSED(_arr_to);
+}
 
 static bool register_cast(int other_type, PyArray_VectorUnaryFunc from_other,
                          PyArray_VectorUnaryFunc to_other)
