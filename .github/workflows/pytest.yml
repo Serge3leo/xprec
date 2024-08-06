@@ -50,7 +50,7 @@ jobs:
         run: |
           pip install -v .[test]
           pip uninstall -y -v xprec -v
-          pip install --no-deps -v .[test]
+          pip install --force-reinstall --no-deps -v .[test]
 
       - name: Test with pytest
         run: |

@@ -14,6 +14,8 @@ import xprec
 if sys.version_info >= (3, 9):
     def ulp(x):
         return math.ulp(x)
+
+    smallest_subnormal = math.nextafter(0, math.inf)
 else:
     import warnings
 
@@ -21,6 +23,8 @@ else:
 
     def ulp(x):
         return sys.float_info.epsilon*x
+
+    smallest_subnormal = sys.float_info.min*sys.float_info.epsilon
 
 
 np_ints = [np.int8, np.int16, np.int32]
@@ -42,7 +46,7 @@ ints_reference = [(npt, *c) for npt in np_ints for c in [
         (np.iinfo(npt).max + 1, -ulp(np.iinfo(npt).max),
                                             np.iinfo(npt).max),  # noqa: E127
         (np.iinfo(npt).max + 1, -1.e-100,   np.iinfo(npt).max),
-        (np.iinfo(npt).max + 1, math.nextafter(0, -math.inf),
+        (np.iinfo(npt).max + 1, -smallest_subnormal,
                                             np.iinfo(npt).max),  # noqa: E127
         # Negative only
         (np.iinfo(npt).min,     0,          np.iinfo(npt).min),
@@ -132,7 +136,7 @@ uints_reference = [(npt, *c) if type(c) is tuple
         (np.iinfo(npt).max,     0,          np.iinfo(npt).max),
         (np.iinfo(npt).max,     1.e-100,    np.iinfo(npt).max),
         (np.iinfo(npt).max,     0.5,        np.iinfo(npt).max),
-        (np.iinfo(npt).max + 1, math.nextafter(0, -math.inf),
+        (np.iinfo(npt).max + 1, -smallest_subnormal,
                                             np.iinfo(npt).max),  # noqa: E127
         (np.iinfo(npt).max + 1, -1.e-100,   np.iinfo(npt).max),
         ]]
