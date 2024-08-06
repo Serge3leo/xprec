@@ -8,13 +8,14 @@ import pytest
 import xprec
 
 
-if np.lib.NumpyVersion(np.__version__) < '1.27.0':
+if np.lib.NumpyVersion(np.__version__) < '1.22.0':
     smallest_subnormal = (np.finfo(np.float64).tiny *
                           2**-np.finfo(np.float64).nmant)
 
     import warnings
 
-    warnings.warn(UserWarning("Wow, that is an old NumPy version!"))
+    warnings.warn(UserWarning("Wow, that is an old NumPy version! " +
+                              repr(np.lib.NumpyVersion(np.__version__))))
 else:
     smallest_subnormal = np.finfo(np.float64).smallest_subnormal
 
@@ -85,7 +86,7 @@ def test_from_int64(exp_a, exp_b, int64_ref):
             break
 
 
-@pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0', 
+@pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0',
                     reason="Only NumPy 1.24.0 or higher report "
                     "conversion errors by warning")
 @pytest.mark.parametrize("a, b, expected", [
@@ -222,7 +223,7 @@ def test_from_uint64(exp_a, exp_b, uint64_ref):
     assert exp == np.uint64(uint64_ref).astype(xprec.ddouble)
 
 
-@pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0', 
+@pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0',
                     reason="Only NumPy 1.24.0 or higher report "
                     "conversion errors by warning")
 @pytest.mark.parametrize("a, b, expected", [
