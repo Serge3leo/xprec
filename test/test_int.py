@@ -82,8 +82,8 @@ def test_from_ints(npt, exp_a, exp_b, int_ref):
 
 
 @pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0', 
-                    reason="Only NumPy 1.24.0 or higher report
-                    conversion errors by warning")
+                    reason="Only NumPy 1.24.0 or higher report "
+                    "conversion errors by warning")
 @pytest.mark.parametrize("npt, a, b, expected",
                          [(npt, *c) if type(c) is tuple
                           else pytest.param(npt, *(c.values), marks=c.marks)
@@ -166,8 +166,8 @@ def test_from_uints(npt, exp_a, exp_b, uint_ref):
 
 
 @pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0', 
-                    reason="Only NumPy 1.24.0 or higher report
-                    conversion errors by warning")
+                    reason="Only NumPy 1.24.0 or higher report "
+                    "conversion errors by warning")
 @pytest.mark.parametrize("npt, a, b, expected",
                          [(npt, *c) for npt in np_uints for c in
     [                                                           # noqa: E128
