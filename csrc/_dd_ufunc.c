@@ -9,6 +9,7 @@
 #include <Python.h>
 #include <structmember.h>
 
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdalign.h>
@@ -250,7 +251,15 @@ static PyObject *PyDDouble_Repr(PyObject *self)
 {
     char out[200];
     ddouble x = PyDDouble_Unwrap(self);
-    snprintf(out, 200, "ddouble(%.16g+%.16g)", x.hi, x.lo);
+
+    const int max_digits10 =
+                #ifdef DBL_DECIMAL_DIG
+                    DBL_DECIMAL_DIG;  // C11: digits for identity conversion
+                #else
+                    18;
+                #endif
+    snprintf(out, 200, "ddouble(%.*g,%.*g)",
+                        max_digits10, x.hi, max_digits10, x.lo);
     return PyUnicode_FromString(out);
 }
 
