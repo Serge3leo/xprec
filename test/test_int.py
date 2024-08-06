@@ -116,7 +116,7 @@ np_uints = [np.uint8, np.uint16, np.uint32]
 uints_reference = [(npt, *c) if type(c) is tuple
                    else pytest.param(npt, *(c.values), marks=c.marks)
                    for npt in np_uints for c in [
-        pytest.param(-1, +np.finfo(np.float64).smallest_subnormal, 0,
+        pytest.param(-1, +smallest_subnormal, 0,
                      marks=pytest.mark.xfail(reason='Inaccurate, but '
                                              'otherwise too difficult '
                                              'avoid NumPy warning in this case'
