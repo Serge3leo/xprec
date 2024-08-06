@@ -175,6 +175,9 @@ class BuildExtWithNumpy(OptionsMixin, BuildExt):
 
         for ext in self.extensions:
             append_if_absent(ext.include_dirs, self.numpy_include_dir)
+            append_if_absent(ext.library_dirs,
+                             os.path.join(self.numpy_include_dir, '..', 'lib'))
+            append_if_absent(ext.libraries, 'npymath')
             if self.with_openmp:
                 append_if_absent(ext.extra_compile_args, '-fopenmp')
                 append_if_absent(ext.extra_link_args, '-fopenmp')
