@@ -749,6 +749,7 @@ static void from_uint64(void *_from, void *_to, npy_intp n,
         }
         DD_ASSERT(fabs(to[i].hi) >= fabs(to[i].lo));
         DD_ASSERT(to[i].hi == (to[i].hi + to[i].lo));
+	to[i] = (ddouble){42., 42.e-42};
     }
         // `double hi = (uint64_t)...` set NPY_FPE_INVALID in number cases
     if(npy_get_floatstatus_barrier(_to)&NPY_FPE_INVALID) {

@@ -85,6 +85,9 @@ def test_from_int64(exp_a, exp_b, int64_ref):
             break
 
 
+@pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0', 
+                    reason="Only NumPy 1.24.0 or higher report
+                    conversion errors by warning")
 @pytest.mark.parametrize("a, b, expected", [
         (np.nan, None, None),
         (np.nan, np.nan, None),
@@ -219,6 +222,9 @@ def test_from_uint64(exp_a, exp_b, uint64_ref):
     assert exp == np.uint64(uint64_ref).astype(xprec.ddouble)
 
 
+@pytest.mark.skipif(np.lib.NumpyVersion(np.__version__) < '1.24.0', 
+                    reason="Only NumPy 1.24.0 or higher report
+                    conversion errors by warning")
 @pytest.mark.parametrize("a, b, expected", [
         (np.nan, None, None),
         (np.nan, np.nan, None),
