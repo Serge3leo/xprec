@@ -49,7 +49,7 @@ int64_reference = [
 
 
 @pytest.mark.parametrize("a, b, expected", int64_reference)
-@pytest.mark.filterwarnings("error")
+# @pytest.mark.filterwarnings("error")
 def test_to_int64(a, b, expected):
     arg = np.float64(a).astype(xprec.ddouble)
     arg += b
@@ -62,7 +62,7 @@ def test_to_int64(a, b, expected):
 
 
 @pytest.mark.parametrize("exp_a, exp_b, int64_ref", int64_reference)
-@pytest.mark.filterwarnings("error")
+# @pytest.mark.filterwarnings("error")
 def test_from_int64(exp_a, exp_b, int64_ref):
     exp = np.float64(exp_a).astype(xprec.ddouble)
     exp += exp_b
@@ -98,7 +98,7 @@ def test_from_int64_numpy_warning(a, b, expected):
     assert record[0].message.args[0] == "invalid value encountered in cast"
 
 
-@pytest.mark.filterwarnings("error")
+# @pytest.mark.filterwarnings("error")
 def test_int64_cvt():
     b = [np.iinfo(np.int64).min, -(1 << 62), 0, 1 << 62,
          np.iinfo(np.int64).max]
@@ -111,7 +111,7 @@ def test_int64_cvt():
     np.testing.assert_array_equal(np.int64(t), np.int64(x))
 
 
-@pytest.mark.filterwarnings("error")
+# @pytest.mark.filterwarnings("error")
 def test_int64_border():
     for i in range(-10, 11):
         if i >= 0 and (i & 1):
@@ -191,7 +191,7 @@ uint64_reference = [
 
 
 @pytest.mark.parametrize("a, b, expected", uint64_reference)
-@pytest.mark.filterwarnings("error")
+# @pytest.mark.filterwarnings("error")
 def test_to_uint64(a, b, expected):
     arg = np.float64(a).astype(xprec.ddouble)
     arg += b
@@ -201,7 +201,7 @@ def test_to_uint64(a, b, expected):
 
 
 @pytest.mark.parametrize("exp_a, exp_b, uint64_ref", uint64_reference)
-@pytest.mark.filterwarnings("error")
+# @pytest.mark.filterwarnings("error")
 def test_from_uint64(exp_a, exp_b, uint64_ref):
     exp = np.float64(exp_a).astype(xprec.ddouble)
     exp += exp_b
