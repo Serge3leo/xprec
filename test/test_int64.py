@@ -15,7 +15,7 @@ if np.lib.NumpyVersion(np.__version__) < '1.22.0':
     import warnings
 
     warnings.warn(UserWarning("Wow, that is an old NumPy version! " +
-                              str(np.lib.NumpyVersion(np.__version__))))
+                              np.__version__))
 else:
     smallest_subnormal = np.finfo(np.float64).smallest_subnormal
 

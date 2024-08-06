@@ -847,13 +847,13 @@ static void to_uint64(void *_from, void *_to, npy_intp n,
         } else if(DD_UNLIKELY(f.hi >= 0x1.p+63)) {
             DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
             f.hi -= 0x1.p+63;
-            int64_t thi = (int64_t) f.hi;
-            double c = f.hi - (double) thi;
+            int64_t thi = (int64_t)f.hi;
+            double c = f.hi - (double)thi;
             to[i] = (1ull<<63) + (uint64_t)(thi + (int64_t)floor(f.lo + c));
         } else {
             DD_ASSERT(isfinite(f.hi) && isfinite(f.lo));
-            int64_t thi = (int64_t) f.hi;
-            double c = f.hi - (double) thi;
+            int64_t thi = (int64_t)f.hi;
+            double c = f.hi - (double)thi;
             to[i] = (uint64_t)(thi + (int64_t)floor(f.lo + c));
         }
     }

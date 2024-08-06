@@ -47,10 +47,7 @@ jobs:
 
       - name: Install package with testing dependencies
         run: |
-          pip install -U -v .[test]
-          pip uninstall -y -v xprec -v
-          pip install -U --force-reinstall --no-deps -v .[test]
-          clang -v || true
+          pip install -v .[test]
 
       - name: Test with pytest
         run: |
